@@ -1,3 +1,6 @@
+package serveurPackage;
+import model.Operation;
+
 import java.io.*;
 import java.net.*;
 
@@ -8,24 +11,38 @@ public class Serveur {
             Socket socket = serveur.accept();
             System.out.println("Client connecté : " + socket.getInetAddress());
 
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(socket.getInputStream()));
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            // On crée le flux de sortie en premier et on le vide (flush)
+            // pour éviter un blocage à l'ouverture des flux objets
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.flush();
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
-            // a) Réception des éléments de l'opération
-            int op1 = Integer.parseInt(in.readLine());
-            String operateur = in.readLine();
-            int op2 = Integer.parseInt(in.readLine());
-            System.out.println("Reçu : " + op1 + " " + operateur + " " + op2);
+            // c) Réception de l'objet
+            Operation op = (Operation) in.readObject();
 
-            // b) Calcul de l'opération demandée (multiplication)
-            int resultat = op1 * op2;
+            // d) Récupération des données
+            double a = op.getOperande1();
+            char operateur = op.getOperateur();
+            double b = op.getOperande2();
+            System.out.println("Reçu : " + a + " " + operateur + " " + b);
 
-            // c) Envoi du résultat au client
-            out.println(resultat);
+            // e) Calcul
+            double resultat = 0;
+            switch (operateur) {
+                case '+': resultat = a + b; break;
+                case '-': resultat = a - b; break;
+                case '*': resultat = a * b; break;
+                case '/': resultat = a / b; break;
+                default:
+                    System.out.println("Opérateur inconnu : " + operateur);
+            }
+
+            // f) Envoi du résultat
+            out.writeObject(resultat);
+            out.flush();
 
             socket.close();
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }

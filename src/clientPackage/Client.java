@@ -1,3 +1,5 @@
+package clientPackage;
+import model.Operation;
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
@@ -7,23 +9,26 @@ public class Client {
         try (Socket socket = new Socket("localhost", 1234);
              Scanner sc = new Scanner(System.in)) {
 
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(socket.getInputStream()));
+            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            out.flush();
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
 
-            // a) Saisie et envoi des éléments de l'opération
+            // b) Saisie et envoi de l'objet Operation
             System.out.print("Premier opérande : ");
-            out.println(sc.nextLine());
-            System.out.print("Opérateur : ");
-            out.println(sc.nextLine());
+            double a = Double.parseDouble(sc.nextLine());
+            System.out.print("Opérateur (+, -, *, /) : ");
+            char operateur = sc.nextLine().charAt(0);
             System.out.print("Deuxième opérande : ");
-            out.println(sc.nextLine());
+            double b = Double.parseDouble(sc.nextLine());
 
-            // d) Lecture et affichage du résultat
-            String resultat = in.readLine();
+            out.writeObject(new Operation(a, operateur, b));
+            out.flush();
+
+            // g) Lecture et affichage du résultat
+            double resultat = (Double) in.readObject();
             System.out.println("Résultat reçu du serveur : " + resultat);
 
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
